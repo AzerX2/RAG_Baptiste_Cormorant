@@ -44,7 +44,7 @@ export async function conversationsRoute(app: import('fastify').FastifyInstance)
       }
     },
     async (request, reply) => {
-      const conv = app.stmts.createConv.get('Nouvelle conversation')
+      const conv = await app.repos.conversations.create('Nouvelle conversation')
       return reply.status(201).send(conv)
     }
   )
@@ -57,7 +57,7 @@ export async function conversationsRoute(app: import('fastify').FastifyInstance)
       }
     },
     async () => {
-      return app.stmts.listConvs.all()
+      return app.repos.conversations.list()
     }
   )
 
@@ -81,9 +81,9 @@ export async function conversationsRoute(app: import('fastify').FastifyInstance)
     },
     async (request, reply) => {
       const { id } = request.params as ConversationParams
-      const conv = app.stmts.getConv.get(id)
+      const conv = await app.repos.conversations.get(id)
       if (!conv) return reply.notFound(`Conversation ${id} introuvable`)
-      const messages = app.stmts.getMessages.all(conv.id)
+      const messages = await app.repos.conversations.getMessages(conv.id)
       return { ...conv, messages }
     }
   )
@@ -97,8 +97,8 @@ export async function conversationsRoute(app: import('fastify').FastifyInstance)
     },
     async (request, reply) => {
       const { id } = request.params as ConversationParams
-      const result = app.stmts.deleteConv.run(id)
-      if (result.changes === 0) return reply.notFound(`Conversation ${id} introuvable`)
+      const changes = await app.repos.conversations.delete(id)
+      if (changes === 0) return reply.notFound(`Conversation ${id} introuvable`)
       return reply.status(204).send()
     }
   )
@@ -120,19 +120,19 @@ export async function conversationsRoute(app: import('fastify').FastifyInstance)
     },
     async (request, reply) => {
       const { id } = request.params as ConversationParams
-      const conv = app.stmts.getConv.get(id)
+      const conv = await app.repos.conversations.get(id)
       if (!conv) return reply.notFound(`Conversation ${id} introuvable`)
 
       const { message } = request.body as ConversationMessageBody
 
-      const history = app.stmts.getMessages.all(id)
+      const history = await app.repos.conversations.getMessages(id)
       if (history.length === 0) {
         app.db.prepare('UPDATE conversations SET title = ? WHERE id = ?').run(message.slice(0, 60), id)
       }
 
-      app.stmts.addMessage.get(id, 'user', message)
+      await app.repos.conversations.addMessage(id, 'user', message)
 
-      const updatedHistory = app.stmts.getMessages.all(id)
+      const updatedHistory = await app.repos.conversations.getMessages(id)
       const ollamaMessages = updatedHistory.map((entry) => ({ role: entry.role, content: entry.content }))
 
       const controller = new AbortController()
@@ -173,7 +173,7 @@ export async function conversationsRoute(app: import('fastify').FastifyInstance)
               sendEvent({ type: 'token', value: parsed.message.content })
             }
             if (parsed.done) {
-              app.stmts.addMessage.get(id, 'assistant', fullResponse)
+              await app.repos.conversations.addMessage(id, 'assistant', fullResponse)
               sendEvent({ type: 'done' })
             }
           }

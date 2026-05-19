@@ -2,7 +2,7 @@ import fp from 'fastify-plugin'
 import Database from 'better-sqlite3'
 import { join } from 'node:path'
 import { indexDocs } from '../rag/indexer.js'
-import type { AppStatements } from '../app-types.js'
+import { createRepositories } from '../infrastructure/repositories.js'
 
 const DB_PATH = process.env.DB_PATH ?? join(process.cwd(), 'data.db')
 
@@ -39,7 +39,7 @@ async function dbPlugin(app: import('fastify').FastifyInstance) {
   `)
 
   // Prepare les statements reutilisables pour simplifier l'acces a la DB
-  const stmts: AppStatements = {
+  const stmts = {
     createConv: db.prepare('INSERT INTO conversations (title) VALUES (?) RETURNING *'),
     listConvs: db.prepare(`
       SELECT c.id, c.title, c.createdAt,
@@ -59,6 +59,9 @@ async function dbPlugin(app: import('fastify').FastifyInstance) {
 
   app.decorate('db', db)
   app.decorate('stmts', stmts)
+  // create and expose repository adapters for the application layer
+  const repos = createRepositories(stmts, db)
+  app.decorate('repos', repos)
 
   app.addHook('onClose', () => db.close())
 

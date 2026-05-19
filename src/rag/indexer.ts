@@ -1,7 +1,7 @@
 import { readFile, readdir } from 'node:fs/promises'
 import { join, extname } from 'node:path'
 import { chunkMarkdown } from './chunker.js'
-import type { AppStatements } from '../app-types.js'
+// stmts shape comes from DB plugin; keep as any for portability
 
 const OLLAMA_URL = process.env.OLLAMA_URL ?? 'http://localhost:11434'
 const EMBED_MODEL = process.env.EMBED_MODEL ?? 'nomic-embed-text'
@@ -22,7 +22,7 @@ export async function getEmbedding(text: string): Promise<number[]> {
 }
 
 // Parcourt le dossier docs/, decoupe markdown, calcule embedding et inseres en base
-export async function indexDocs(db: any, stmts: AppStatements): Promise<{ files: number; chunks: number }> {
+export async function indexDocs(db: any, stmts: any): Promise<{ files: number; chunks: number }> {
   const files = (await readdir(DOCS_DIR, { recursive: true })) as string[]
   const markdownFiles = files.filter((file: string) => extname(file) === '.md')
 

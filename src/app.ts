@@ -1,18 +1,18 @@
-import Fastify from 'fastify'
+import fastify from 'fastify'
 import sensible from '@fastify/sensible'
-import { healthRoute } from './routes/health.js'
-import { chatRoute } from './routes/chat.js'
-import { conversationsRoute } from './routes/conversations.js'
-import { agentRoute } from './routes/agent.js'
-import { ragRoute } from './routes/rag.js'
-import dbPlugin from './plugins/db.js'
+import { healthRoute } from './adapters/http/health.js'
+import { chatRoute } from './adapters/http/chat.js'
+import { conversationsRoute } from './adapters/http/conversations.js'
+import { agentRoute } from './adapters/http/agent.js'
+import { ragRoute } from './adapters/http/rag.js'
+import dbPlugin from './infrastructure/dbPlugin.js'
 
 // Construis l'app Fastify et enregistre les routes/plugins.
 // je mets ici des options par défaut
 // et je conserve opts pour pouvoir surcharger en tests.
 export async function buildApp(opts: Record<string, unknown> = {}) {
   // Instance Fastify principale utilisee partout
-  const app = Fastify({
+  const app = fastify({
     logger: {
       level: process.env.LOG_LEVEL ?? 'info',
       transport: process.env.NODE_ENV !== 'production'

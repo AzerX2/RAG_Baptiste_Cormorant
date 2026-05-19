@@ -1,5 +1,5 @@
 import { getEmbedding } from './indexer.js'
-import type { AppStatements, ChunkRow } from '../app-types.js'
+import type { ChunkRow } from '../domain/entities.js'
 
 const MIN_SIMILARITY = 0.65
 
@@ -20,7 +20,7 @@ function cosineSimilarity(a: number[], b: number[]): number {
 // Recupere les chunks les plus proches d'une requete.
 // Filtre par similarite pour reduire le bruit
 export async function retrieve(
-  stmts: AppStatements,
+  stmts: any,
   query: string,
   k = 4
 ): Promise<Array<Pick<ChunkRow, 'source' | 'section' | 'content'> & { similarity: number }>> {

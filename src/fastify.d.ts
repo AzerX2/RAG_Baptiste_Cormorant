@@ -1,8 +1,9 @@
-import type { AppStatements } from './app-types.js'
+import 'fastify'
 
 declare module 'fastify' {
   interface FastifyInstance {
     db: any
-    stmts: AppStatements
+    stmts: any
+    repos?: any
   }
 }
